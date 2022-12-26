@@ -1,32 +1,64 @@
 <template>
-  <div id="app">
-    <nav>
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </nav>
-    <router-view/>
-  </div>
+  <v-app>
+    <div class="d-flex">
+      <sidebar />
+      <HomeView :list = list />
+    </div>
+    
+    <v-main>
+      <router-view/>
+    </v-main>
+  </v-app>
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script>
+import axios from "axios";
+import sidebar from './components/sidebar.vue';
+import HomeView from "./views/HomeView.vue";
 
-nav {
-  padding: 30px;
-}
+export default {
+  name: 'App',
+  components: {
+    sidebar,
+    HomeView
+  },  
 
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
+  data: () => ({
+    list: [],
+    page: 1
+  }),
 
-nav a.router-link-exact-active {
-  color: #42b983;
-}
-</style>
+  methods: {
+
+    // Get Initial Data
+    async getData() {
+      let result = await axios.get(`https://pim.wforwoman.com/pim/pimresponse.php/?service=category&store=1&url_key=top-wear-kurtas&page=${this.page}&count=20&sort_by=&sort_dir=desc&filter=`)
+
+      const value = this.list.concat(result.data.result.products)
+      this.list = value
+    },
+
+    // Get Next Set of Data
+    async getNextData() {
+      let next = await axios.get(`https://pim.wforwoman.com/pim/pimresponse.php/?service=category&store=1&url_key=top-wear-kurtas&page=${this.page}&count=20&sort_by=&sort_dir=desc&filter=`)
+
+      this.list.push(next.data.results.products)
+    },
+    
+    handleScroll() {
+    if(window.scrollY + window.innerHeight >= document.body.scrollHeight - 50) {
+      this.page++
+        this.getData();
+    }
+  }
+  },
+
+  mounted(){
+    // this.getNextPage();
+    window.addEventListener('scroll', this.handleScroll)
+  },
+  beforeMount() {
+    this.getData();
+  }
+};
+</script>
